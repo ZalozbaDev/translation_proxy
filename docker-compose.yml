@@ -1,0 +1,75 @@
+services:
+  libretranslate:
+    image: libretranslate/libretranslate:v1.9.5
+    restart: unless-stopped
+    environment:
+      # Preload only the language pairs we care about to keep the image small.
+      # Override via LT_LOAD_ONLY env at compose time if needed.
+      LT_LOAD_ONLY: "en,de,cs,pl"
+      LT_DISABLE_WEB_UI: "false"
+      LT_UPDATE_MODELS: "false"
+    volumes:
+      - libretranslate-models:/home/libretranslate/.local
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          python3 -c "import urllib.request,sys; sys.exit(0 if
+          urllib.request.urlopen('http://127.0.0.1:5000/languages').status
+          ==200 else 1)"
+      interval: 30s
+      timeout: 5s
+      retries: 20
+      start_period: 120s
+
+  sotra:
+    # Build from the ZalozbaDev/sotra_modele checkout, branch
+    # workaround_jitsi_limitation. Clone alongside this repo before
+    # `docker compose up`:
+    #   git clone -b workaround_jitsi_limitation \
+    #     https://github.com/ZalozbaDev/sotra_modele ../sotra_modele
+    # The Dockerfile.libretranslate variant bakes the model weights from
+    # sotra-lsf-ds/Docker/models1/ into the image and starts inference_new2.py,
+    # which exposes both /translate (native sotra API) and /libretranslate
+    # (LibreTranslate-shaped API used by Jitsi/jigasi) on port 3000.
+    build:
+      context: ../sotra_modele/sotra-lsf-ds/Docker
+      dockerfile: Dockerfile.libretranslate
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          python3 -c "import urllib.request,sys; sys.exit(0 if
+          urllib.request.urlopen('http://127.0.0.1:3000/info').status==200
+          else 1)"
+      interval: 30s
+      timeout: 5s
+      retries: 30
+      start_period: 180s
+
+  proxy:
+    build:
+      context: ./proxy
+    restart: unless-stopped
+    environment:
+      SOTRA_URL: "http://sotra:3000"
+      LIBRETRANSLATE_URL: "http://libretranslate:5000"
+      # Override the routing matrices here if your deployed sotra model
+      # advertises different pairs, or if libretranslate was preloaded
+      # with a different language set.
+      # SOTRA_PAIRS: "hsb->de,de->hsb,dsb->de,de->dsb,hsb->dsb,dsb->hsb,cs->hsb"
+      # LIBRETRANSLATE_LANGS: "en,de,cs,pl"
+      # PIVOT_LANGUAGES: "de,en"
+    depends_on:
+      libretranslate:
+        condition: service_healthy
+      sotra:
+        condition: service_healthy
+    ports:
+      # The proxy speaks the LibreTranslate wire protocol. Point jigasi at
+      # http://<host>:5050/translate instead of the real libretranslate.
+      - "5050:5000"
+
+volumes:
+  libretranslate-models:

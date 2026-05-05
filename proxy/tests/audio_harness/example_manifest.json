@@ -1,0 +1,25 @@
+[
+  {
+    "wav": "hsb_clip_001.wav",
+    "source_lang": "hsb",
+    "target_lang": "en",
+    "expected_source": "Witajće k nam.",
+    "expected_target": "Welcome to us.",
+    "note": "chained route: hsb -> de via sotra, de -> en via libretranslate"
+  },
+  {
+    "wav": "hsb_clip_002.wav",
+    "source_lang": "hsb",
+    "target_lang": "de",
+    "expected_source": "Witajće k nam.",
+    "expected_target": "Willkommen bei uns.",
+    "note": "direct sotra route"
+  },
+  {
+    "wav": "dsb_clip_001.wav",
+    "source_lang": "dsb",
+    "target_lang": "en",
+    "expected_target": "Welcome.",
+    "note": "expected_source omitted; only translation is asserted"
+  }
+]
