@@ -58,7 +58,7 @@ jobs:
             type=schedule,pattern=nightly
       - name: Build and push Docker image
         if: ${{ fromJSON(env.PUSH) }}
-        uses: docker/build-push-action@v7f
+        uses: docker/build-push-action@v7
         with:
           # allow creation for multiple platforms
           platforms: |
