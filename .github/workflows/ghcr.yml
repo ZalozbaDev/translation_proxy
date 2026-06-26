@@ -63,7 +63,7 @@ jobs:
           # allow creation for multiple platforms
           platforms: |
             linux/amd64
-          context: .
+          context: proxy
           file: proxy/Dockerfile
           load: false
           push: true
