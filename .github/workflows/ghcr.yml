@@ -58,13 +58,13 @@ jobs:
             type=schedule,pattern=nightly
       - name: Build and push Docker image
         if: ${{ fromJSON(env.PUSH) }}
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7f
         with:
           # allow creation for multiple platforms
           platforms: |
             linux/amd64
-          context: proxy
-          file: Dockerfile
+          context: .
+          file: proxy/Dockerfile
           load: false
           push: true
           cache-from: type=local,src=/tmp/.buildx-cache
